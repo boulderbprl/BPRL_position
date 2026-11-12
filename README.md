@@ -57,14 +57,15 @@ ssh straindronenew@100.97.120.117
 
 ### Watching the drone state
 
-Open another SSH terminal. These commands run on CPUs 0–2, so they don't disturb the pipeline.
+Open another SSH terminal. These commands run on CPUs 0–2, so they don't disturb the pipeline. No setup is needed: every new terminal loads `~/drone_env.sh` (from `~/.bashrc`), which sources ROS and sets the same ROS settings the pipeline uses.
 
 ```bash
-eval "$(drone env)"                                    # needed once per terminal
-ros2 topic echo /crashDrone/state
-ros2 bag record /crashDrone/state /crashDrone/pose
-ros2 run position_publisher drone_commander
+run_commander                                          # send commands to the drone
+ros2 topic echo /crashDrone/state                      # live position + velocity
+ros2 bag record /crashDrone/state /crashDrone/pose     # record a flight
 ```
+
+`run_commander` loads the workspace and then runs `ros2 run position_publisher drone_commander`.
 
 ---
 
@@ -303,7 +304,7 @@ All settings live in `/etc/drone-pipeline/pipeline.conf` on the Pi.
 | Log says `Vicon body ... not streamed` | `VICON_BODY` doesn't match the object name in Vicon | Copy the name from the log into `VICON_BODY`, then `drone restart` |
 | Log says `Vicon body occluded` | Cameras can't see the drone | Check markers and camera coverage |
 | MAVProxy log says `Waiting for radio` | Radio not plugged in, or on a different port | Plug it in; check `RADIO_DEV` |
-| `ros2 topic` in a terminal shows nothing | Terminal has different ROS settings | Run `eval "$(drone env)"` in that terminal |
+| `ros2 topic` in a terminal shows nothing | Terminal didn't load `~/drone_env.sh` (e.g. a script, or a shell that skips `~/.bashrc`) | Run `eval "$(drone env)"` in that terminal |
 | `kernel isolated CPUs` FAIL | Pi hasn't rebooted since install | `sudo reboot` |
 
 To watch input and output rates live:
