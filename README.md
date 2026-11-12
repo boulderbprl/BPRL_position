@@ -280,7 +280,15 @@ If any stage crashes, systemd restarts it after 2 seconds.
 ### CPU isolation
 
 - The kernel keeps CPU 3 to itself (`isolcpus`), and all normal programs are confined to CPUs 0–2. The pipeline runs in `drone.slice`, which only uses CPU 3.
-- Each pipeline service runs with real-time scheduling (`SCHED_FIFO` priorities set in `pipeline.conf`).
+- Each pipeline service runs with real-time scheduling, at the priority set in `pipeline.conf` (higher runs first):
+
+  | Service | Policy | Priority |
+  |---|---|---|
+  | `drone-natnet` | Round robin (`SCHED_RR`) | 70 |
+  | `drone-vicon-driver` | FIFO (`SCHED_FIFO`) | 70 |
+  | `drone-vicon-relay` | FIFO | 65 |
+  | `drone-mavproxy` | FIFO | 60 |
+  | `drone-publisher` | FIFO | 50; its send thread raises itself to 80 |
 - `cpu-setup.sh` sends all hardware interrupts, including the mocap ethernet's, and network packet processing to CPUs 0–2, so they never interrupt the pipeline on CPU 3. It also locks the CPU clock at full speed.
 
 ---
